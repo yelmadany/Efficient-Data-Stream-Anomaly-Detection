@@ -4,7 +4,7 @@ from joblib import dump
 from pyod.models.mad import MAD
 
 #Initial training of the model on data with no contaimination and we enable trainMode to speedup the type
-trainingGenerator = data.generateCPUData(contamination = 0, trainMode=True)
+trainingGenerator = data.generateCPUData(contamination = 10, trainMode=True)
 Training_Data = []
 
 for i in range(10000):

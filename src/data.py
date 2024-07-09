@@ -41,7 +41,7 @@ def generateCPUData(contamination = 10, timeOfDay = 0, week = 0, EOM = False, tr
     #---------------------------------------
 
     if(not trainMode): #during inital training phase we can skip the wait times 
-        time.sleep(1) #sleep
+        time.sleep(0.1) #sleep
     yield data
     
 #-----------------------------------------------------------
@@ -50,6 +50,14 @@ def getData(timeOfDay, week, EOM):
   Function is responsible for generating regular and seasonal data.
   Regular data: Downtime
   Seasonal data: Uptime (work hours) - Heavyload (End of the month) - Downtime(Weekends)
+
+  Parameters:
+  - timeOfDay (int): Current time of day (0-23).
+  - week (int): Current week (0-6).
+  - EOM (bool): End of month indicator.
+
+  Returns:
+  - float: Simulated CPU utilization value.
   """
   #---------Get the Data----------------
   #Check if downtime (weekends or from 4pm to 8am)
@@ -69,6 +77,14 @@ def noiseData(timeOfDay, week, EOM):
   """
   Function is responsible for generating irregular data/anomalies
   First Identifies what is supposed to be the appropriate response and returns one of the other two responses.
+
+  Parameters:
+  - timeOfDay (int): Current time of day (0-23).
+  - week (int): Current week (0-6).
+  - EOM (bool): End of month indicator.
+
+  Returns:
+  - float: Simulated anomalous CPU utilization value.
   """
   print('Anomaly: ')
   responses = [downTime, upTime, heavyLoad]
@@ -91,8 +107,8 @@ def downTime():
   return random.uniform(1,10) 
 
 def upTime():
-  #uptime range from 10 - 70% 
-  return random.uniform(10, 70)
+  #uptime range from 10 - 50% 
+  return random.uniform(10, 50)
 
 def heavyLoad():
     #HeavyLoad range from 70 - 100% 

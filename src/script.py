@@ -11,7 +11,7 @@ while(True):
   datapoint = np.array(next(realTimeGenerator)).reshape(-1,1)
   is_outlier = model.predict(datapoint)
   score = model.decision_function(datapoint)
-
+  
   print('Outlier:', is_outlier)
   print('Score', score)
 
