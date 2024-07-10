@@ -1,3 +1,9 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from matplotlib.widgets import Button
+from statsmodels.tsa.seasonal import STL
 import random
 import time
 
@@ -116,3 +122,93 @@ def heavyLoad():
 
 
 #----- Additional Functions
+
+
+
+
+def fit(data):
+  stl = STL(data)
+  res = stl.fit()
+
+  return res
+
+def TrainSTLModel(instances):
+  # Train Data Creation
+  trainingGenerator = generateCPUData(contamination=0, trainMode=True)  # No contamination for training data
+  cpuData = pd.Series([next(trainingGenerator) for _ in range(instances)], index=pd.date_range("1-1-2023",periods=instances, freq="1h"))
+
+    # Initial STL Decomposition
+  return fit(cpuData), cpuData
+
+
+def predict(data, data_points, anomalies, window_size):
+    new_data_index = data_points.index[-1] + pd.Timedelta(hours=1)
+    new_data_series = pd.Series([data], index=[new_data_index])
+    data_points = pd.concat([data_points, new_data_series])
+    
+    if len(data_points) > window_size:
+        data_points = data_points[-window_size:]
+
+    if len(data_points) >= window_size:
+        res = fit(data_points)
+
+        residual = res.resid.iloc[-1]
+        if residual < lower or residual > upper:
+            anomalies.append((data_points.index[-1], data))
+            print(f"Anomaly detected at {data_points.index[-1]}: {data}")
+    else:
+        res = fit(data_points)
+    
+    return res, data_points
+
+
+
+
+
+
+
+# Define the real-time visualization function
+def visualizeData(iterations=10, contamination=10, window_size=100):
+    fig, ax = plt.subplots()
+    realTimeGenerator = generateCPUData(contamination=contamination)
+    _, updated_data_points = TrainSTLModel(1000)
+    anomalies = []
+
+    def stop(event):
+        ani.event_source.stop()
+        print('Stopping animation...')
+
+    def update(frame):
+        data = next(realTimeGenerator)
+        res, _ = predict(data, updated_data_points, anomalies, window_size)
+        ax.clear()
+        ax.set_ylim([0, 100])
+        ax.plot(updated_data_points, label="Data Stream", color="blue")
+
+        if len(updated_data_points) >= window_size:
+            ax.plot(updated_data_points.index[-window_size:], res.trend + res.seasonal, label="Estimated", color="orange")
+            if anomalies:
+                anomaly_indices, anomaly_values = zip(*anomalies)
+                ax.scatter(anomaly_indices, anomaly_values, color='red', marker='D', label='Anomalies')
+
+        ax.legend()
+        ax.set_title("Real-Time Data Stream and Anomaly Detection")
+        ax.set_xlabel("Time")
+        ax.set_ylabel("CPU Utilization")
+
+    # Create a stop button
+    stop_button_ax = plt.axes([0.9, 0.05, 0.1, 0.075])
+    stop_button = Button(stop_button_ax, 'Stop')
+    stop_button.on_clicked(stop)
+
+    ani = animation.FuncAnimation(fig, update, frames=iterations, repeat=False, interval=1000)
+    plt.show()
+
+model, datax = TrainSTLModel(1000)
+# Calculate Residual Mean and Standard Deviation for Anomaly Detection
+resid_mu = model.resid.mean()
+resid_dev = model.resid.std()
+threshold_factor = 2
+lower = resid_mu - threshold_factor * resid_dev
+upper = resid_mu + threshold_factor * resid_dev
+visualizeData(iterations=100, contamination=10, window_size=100)
