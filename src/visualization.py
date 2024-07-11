@@ -8,6 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.widgets import Button
+import matplotlib.dates as mdates
 import logging
 
 # Configure logging
@@ -89,17 +90,18 @@ def visualizeData(iterations=150, contamination=10, window_size=10000, trainIter
                 #replot the graph
                 ax.clear()
                 ax.set_ylim([0, 100]) #As we are plotting CPU utilization, the y-axis has a range of [0-100]
-                ax.plot(model.data_points[trainIterations:], label="Data Stream", color="blue")
+                ax.plot(model.data_points.index[trainIterations:], model.data_points[trainIterations:], label="Data Stream", color="blue")
 
                 #If we have anomalies, we need to plot it in the appropriate indices
                 if len(model.anomalies):
-                    ax.scatter(model.anomalies.index, model.anomalies, color='red', marker='D', label='Anomalies')
+                    ax.scatter(model.anomalies.index , model.anomalies, color='red', marker='D', label='Anomalies')
 
                 #Labelling the graph
                 ax.legend()
                 ax.set_title("Real-Time Data Stream and Anomaly Detection")
                 ax.set_xlabel("Time")
                 ax.set_ylabel("CPU Utilization")
+                ax.xaxis.set_major_formatter(mdates.DateFormatter('%m-%d'))
             except Exception as e:
                 logging.error("Error during update: %s", e)
 
